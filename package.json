@@ -1,0 +1,68 @@
+{
+  "name": "@cyrix/gameoflife",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "Morten Midtgaard Rasmussen <cyrixmorten@gmail.com>",
+  "scripts": {
+    "run": "ts-node src/Run.ts",
+    "check-types": "npm compile:ts --noEmit",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:cover": "npm test --coverage",
+    "test:changed": "npm test --watch",
+    "test:update": "npm test -u",
+    "test:watch": "npm test --watchAll",
+    "lint": "npm lint:ts",
+    "lint:ts": "tslint src/**/*.ts",
+    "compile": "npm lint && npm compile:ts",
+    "compile:watch": "npm compile:ts -w",
+    "compile:ts": "tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/jest": "28.1.4",
+    "@types/node": "18.0.0",
+    "babel-core": "6.26.3",
+    "babel-jest": "28.1.2",
+    "cross-env": "7.0.3",
+    "jest": "28.1.2",
+    "ts-jest": "28.0.5",
+    "ts-node": "^10.8.1",
+    "tslint": "5.20.1",
+    "tslint-config-prettier": "1.18.0",
+    "typescript": "4.7.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "text",
+      "html"
+    ],
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    },
+    "testRegex": "(\\.|/)(test)\\.(js|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json",
+      "node"
+    ]
+  },
+  "standard": {
+    "env": [
+      "node",
+      "jest"
+    ],
+    "globals": [
+      "expect"
+    ]
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.182",
+    "lodash": "^4.17.21"
+  }
+}
