@@ -1,62 +1,41 @@
-import { Cell } from './Cell';
+import { Cell, VERDICT } from './Cell';
 import { Coordinate } from './Coordinate';
-import { cellAt, CellRecord, createBoardFromCells, createCellRecordFromArray } from './Utils';
+import { addCell, cellAt, CellRecord, equalCoordinates, toCellKey, verdictBoard } from './Utils';
 import * as _ from 'lodash';
 
 export class GameOfLife {
 
-    constructor(public readonly cells: CellRecord = {}) {}
+    constructor(public readonly cells: CellRecord = {}) {
+    }
 
-    tick(showVerdict: boolean) : Cell[] {
-        const cellsWithNeighbours = Object.values(this.cells).map((cell) => this.cellWithNeighbours(cell.coordinate)).flat(2);
+    tick(showVerdict: boolean) {
 
-        const uniqueCellsWithNeighbours = _.uniqWith(cellsWithNeighbours, (cellA, cellB) => {
-            return _.isEqual(cellA.coordinate, cellB.coordinate);
-        });
-
-        // TODO fix cell count increase per tick
-        console.log('cellsWithNeighbours.length', cellsWithNeighbours.length);
-        console.log('uniqueCellsWithNeighbours.length', uniqueCellsWithNeighbours.length);
-
-        const shouldSurvive: Cell[] = uniqueCellsWithNeighbours.filter((cell) => this.shouldSurvive(cell.coordinate)).map((cell: Cell) => {
-            cell.setVerdict('survive', () => {
+        const shouldSurvive: Cell[] = this.aliveCells().filter((cell) => this.shouldSurvive(cell)).map((cell: Cell) => {
+            cell.setVerdict(VERDICT.SURVIVE, () => {
                 // do nothing
-            })
+            });
             return cell;
         });
 
-        const shouldDie: Cell[] = uniqueCellsWithNeighbours.filter((cell) => this.shouldDie(cell.coordinate)).map((cell: Cell) => {
-            cell.setVerdict('kill', () => {
+        const shouldDie: Cell[] = this.aliveCells().filter((cell) => this.shouldDie(cell)).map((cell: Cell) => {
+            cell.setVerdict(VERDICT.KILL, () => {
                 cell.kill();
             })
             return cell;
         });
 
-        const shouldReproduce: Cell[] = uniqueCellsWithNeighbours.filter((cell) => this.shouldReproduce(cell.coordinate)).map((cell: Cell) => {
-            cell.setVerdict('revive', () => {
+
+        const shouldReproduce: Cell[] = this.allDeadNeighbours().map(c => new Cell(c, false)).filter((cell) => this.shouldReproduce(cell)).map((cell: Cell) => {
+            cell.setVerdict(VERDICT.REPRODUCE, () => {
                 cell.revive();
             })
-            return cell;
+            return addCell(cell, this.cells);
         });
 
         if (showVerdict) {
-            const surviveBoard = createBoardFromCells(createCellRecordFromArray(shouldSurvive), {
-                check: (c) => c.verdictName === 'survive',
-                whenTrue: true,
-                whenFalse: false
-            });
-
-            const dieBoard = createBoardFromCells(createCellRecordFromArray(shouldDie), {
-                check: (c) => c.verdictName === 'kill',
-                whenTrue: true,
-                whenFalse: false
-            });
-
-            const reproduceBoard = createBoardFromCells(createCellRecordFromArray(shouldReproduce), {
-                check: (c) => c.verdictName === 'revive',
-                whenTrue: true,
-                whenFalse: false
-            });
+            const surviveBoard = verdictBoard(VERDICT.SURVIVE, shouldSurvive);
+            const dieBoard = verdictBoard(VERDICT.KILL, shouldDie);
+            const reproduceBoard = verdictBoard(VERDICT.REPRODUCE, shouldDie);
 
             const verdictsBoard = surviveBoard.map((surviveRow: boolean[], y: number) => {
                 return surviveRow.map((survive: boolean, x) => {
@@ -67,60 +46,67 @@ export class GameOfLife {
             console.log('verdicts', verdictsBoard);
         }
 
+        [...shouldSurvive, ...shouldDie, ...shouldReproduce].map((cell) => cell.applyVerdict());
 
-        return [...shouldSurvive, ...shouldDie, ...shouldReproduce].map((cell) => cell.applyVerdict());
+
+        for (const key of shouldDie.map((cell) => cell.coordinate).map(toCellKey)) {
+            delete this.cells[key];
+        }
     }
 
     isCellAlive(coordinate: Coordinate) {
         return this.cells[`${coordinate.x},${coordinate.y}`]?.isAlive();
     }
 
-    cellWithNeighbours(coordinate: Coordinate) {
-        const neighbours: Cell[] = [];
+    aliveCells() {
+        return Object.values(this.cells);
+    }
+
+    allDeadNeighbours() {
+        const neighbourCoordinates: Coordinate[] = this.aliveCells().map((cell) => this.surroundingCoordinates(cell.coordinate)).flat(2)
+        const deadNeighbourCoordinates = neighbourCoordinates.filter((c) => !cellAt(c, this.cells));
+        return _.uniqWith(deadNeighbourCoordinates, equalCoordinates);
+    }
+
+    surroundingCoordinates(coordinate: Coordinate): Coordinate[] {
+        const neighbourCoordinates: Coordinate[] = [];
         for (let x = -1; x <= 1; x++) {
             for (let y = -1; y <= 1; y++) {
-                const neighbourCoordinate = {
-                    x: coordinate.x + x,
-                    y: coordinate.y + y
+                if (x === 0 && y === 0) {
+                    // skip
+                } else {
+                    neighbourCoordinates.push({
+                        x: coordinate.x + x,
+                        y: coordinate.y + y
+                    });
                 }
-                neighbours.push(cellAt(neighbourCoordinate, this.cells))
             }
         }
-        return neighbours;
+        return neighbourCoordinates;
     }
 
 
-    neighbourCount(coordinate: Coordinate) {
-        const {x: centerX, y: centerY} = coordinate;
-        return this.cellWithNeighbours(coordinate).map((c) => {
-            const {x: cellX, y: cellY} = c.coordinate;
-            const isCenterCell = centerX === cellX && centerY === cellY;
-            return c.isAlive() && !isCenterCell;
+    neighbourCount(cell: Cell) {
+        return this.surroundingCoordinates(cell.coordinate).map((c) => {
+            return cellAt(c, this.cells)
         }).filter(v => !!v).length;
     }
 
-    lookUpCell(coordinate: Coordinate) {
-        return cellAt(coordinate, this.cells)
-    }
-
     // Any live cell with two or three live neighbours survives.
-    shouldSurvive(coordinate: Coordinate) {
-        const alive = this.lookUpCell(coordinate).isAlive();
-        const count = this.neighbourCount(coordinate);
-        return  alive && (count === 2 || count === 3);
+    shouldSurvive(cell: Cell) {
+        const count = this.neighbourCount(cell);
+        return cell.isAlive() && (count === 2 || count === 3);
     }
 
     // Any dead cell with three live neighbours becomes a live cell.
-    shouldReproduce(coordinate: Coordinate) {
-        const notAlive = !this.lookUpCell(coordinate).isAlive();
-        const count = this.neighbourCount(coordinate);
-        return  notAlive && count === 3;
+    shouldReproduce(cell: Cell) {
+        const count = this.neighbourCount(cell);
+        return !cell.isAlive() && count === 3;
     }
 
     // Any live cell with more than three live neighbours dies, as if by overpopulation.
-    shouldDie(coordinate: Coordinate) {
-        const alive = this.lookUpCell(coordinate).isAlive();
-        const count = this.neighbourCount(coordinate);
-        return alive && (count < 2 || count > 3);
+    shouldDie(cell: Cell) {
+        const count = this.neighbourCount(cell);
+        return cell.isAlive() && (count < 2 || count > 3);
     }
 }

@@ -1,8 +1,16 @@
 import { Coordinate } from './Coordinate';
+import { toCellKey } from './Utils';
+
+export enum VERDICT {
+    NONE = 'O',
+    SURVIVE = 'S',
+    REPRODUCE = 'L',
+    KILL = 'K'
+}
 
 export class Cell {
 
-    public verdictName: string = '';
+    public verdict: VERDICT = VERDICT.NONE;
     private verdictFn: () => void = () => null;
 
     constructor(public readonly coordinate : Coordinate, private alive: boolean = true) {}
@@ -19,8 +27,8 @@ export class Cell {
         this.alive = true;
     }
 
-    public setVerdict(verdictName: string, verdictFn: () => void) {
-        this.verdictName = verdictName;
+    public setVerdict(verdict: VERDICT, verdictFn: () => void) {
+        this.verdict = verdict;
         this.verdictFn = verdictFn;
     }
 
@@ -29,7 +37,7 @@ export class Cell {
             this.verdictFn();
         }
 
-        this.verdictName = '';
+        this.verdict = VERDICT.NONE;
         this.verdictFn = () => null;
 
         return this;

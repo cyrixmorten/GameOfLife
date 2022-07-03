@@ -14,19 +14,19 @@ const startGame = () => {
 
 
     console.log('start', createBoardFromCells(blinker.cells, {
-        check: (c) => c.isAlive(),
+        check: (c) => c && c.isAlive(),
         whenTrue: 'X',
         whenFalse: 'O'
     }));
 
     let tickCount = 0;
     const run = () => {
-        blinker.tick(false);
+        blinker.tick(true);
         tickCount++
 
 
         console.log('tick', tickCount,  createBoardFromCells(blinker.cells, {
-            check: (c) => c.isAlive(),
+            check: (c) => c && c.isAlive(),
             whenTrue: 1,
             whenFalse: 0
         }));

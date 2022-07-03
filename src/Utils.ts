@@ -1,31 +1,41 @@
-import { Cell } from './Cell';
+import { Cell, VERDICT } from './Cell';
 import { Coordinate } from './Coordinate';
-import { add } from 'lodash';
 
 export type CellRecord = { [key: string]: Cell };
 
-const keyOf = (coordinate: Coordinate) => {
+export const toCellKey = (coordinate: Coordinate): string => {
     return `${coordinate.x},${coordinate.y}`;
 }
 
-export const addCell = (cell: Cell, cells: CellRecord) => {
-    return cells[keyOf(cell.coordinate)] = cell;
+export const cellAt = (coordinate: Coordinate, cells: CellRecord) => {
+    return cells[toCellKey(coordinate)];
 };
 
-export const cellAt = (coordinate: Coordinate, cells: CellRecord) => {
-    return cells[keyOf(coordinate)] ?? addCell(new Cell(coordinate, false), cells);
-};
+export const addCell = (cell: Cell, cells: CellRecord) => {
+    return cells[toCellKey(cell.coordinate)] = cell;
+}
+
+export const equalCoordinates = (c1: Coordinate, c2: Coordinate) => {
+    return c1.x === c2.x && c1.y === c2.y;
+}
+
+export const verdictBoard = (verdict: VERDICT, cells: Cell[]) => {
+    return createBoardFromCells(createCellRecordFromArray(cells), {
+        check: (c) => c.verdict === verdict,
+        whenTrue: true,
+        whenFalse: false
+    });
+}
 
 export const createCellRecordFromBoard = (board: number[][]) => {
     const cells: CellRecord = {};
     for (let y = 0; y < board.length; y++) {
         for (let x = 0; x < board[y].length; x++) {
             if (board[y][x] === 1) {
-                const coordinate = {
+                addCell(new Cell({
                     x: x,
                     y: y
-                };
-                cells[keyOf(coordinate)] = new Cell(coordinate);
+                }), cells);
             }
         }
     }
@@ -43,12 +53,12 @@ export const createCellRecordFromArray = (cellsArray: Cell[]) => {
             addCell(new Cell({
                 x: x,
                 y: y
-            }, false), cells)
+            }, false), cells);
         }
     }
 
     cellsArray.forEach((cell) => {
-        cells[keyOf(cell.coordinate)] = cell;
+        addCell(cell, cells);
     })
 
     return cells;
