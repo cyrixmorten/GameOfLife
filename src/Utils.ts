@@ -68,9 +68,10 @@ export interface BoardRenderOptions {
     check: (cell: Cell) => boolean;
     whenTrue: any;
     whenFalse: any;
+    write: (cell: Cell) => string;
 }
 
-export const createBoardFromCells = (cells: CellRecord, renderOptions: BoardRenderOptions): any[][] => {
+export const createBoardFromCells = (cells: CellRecord, renderOptions: Partial<BoardRenderOptions>): any[][] => {
     let lowestCoordinate: Coordinate = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
     let largestCoordinate: Coordinate = {x: Number.MIN_VALUE, y: Number.MIN_VALUE};
 
@@ -94,7 +95,7 @@ export const createBoardFromCells = (cells: CellRecord, renderOptions: BoardRend
     //console.log('lowestCoordinate', lowestCoordinate);
     //console.log('largestCoordinate', largestCoordinate);
 
-    const board: number[][] = [
+    const board: any[][] = [
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
@@ -108,7 +109,15 @@ export const createBoardFromCells = (cells: CellRecord, renderOptions: BoardRend
     // TODO hardcoded board size
     for (let y = 0; y <= largestY; y++) {
         for (let x = 0; x <= largestX; x++) {
-            board[y][x] = renderOptions.check(cellAt({x, y}, cells)) ? renderOptions.whenTrue : renderOptions.whenFalse;
+            const cell = cellAt({x, y}, cells);
+
+            if (typeof renderOptions.check === 'function') {
+                board[y][x] = renderOptions.check(cell) ? renderOptions.whenTrue : renderOptions.whenFalse;
+            }
+
+            if (typeof renderOptions.write === 'function') {
+                board[y][x] = renderOptions.write(cell);
+            }
         }
     }
 

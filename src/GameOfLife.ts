@@ -1,6 +1,14 @@
 import { Cell, VERDICT } from './Cell';
 import { Coordinate } from './Coordinate';
-import { addCell, cellAt, CellRecord, equalCoordinates, toCellKey, verdictBoard } from './Utils';
+import {
+    addCell,
+    cellAt,
+    CellRecord,
+    createBoardFromCells,
+    createCellRecordFromArray,
+    equalCoordinates,
+    toCellKey,
+} from './Utils';
 import * as _ from 'lodash';
 
 export class GameOfLife {
@@ -25,28 +33,22 @@ export class GameOfLife {
         });
 
 
-        const shouldReproduce: Cell[] = this.allDeadNeighbours().map(c => new Cell(c, false)).filter((cell) => this.shouldReproduce(cell)).map((cell: Cell) => {
+        const shouldReproduce: Cell[] = this.allDeadNeighbourCells().filter((cell) => this.shouldReproduce(cell)).map((cell: Cell) => {
             cell.setVerdict(VERDICT.REPRODUCE, () => {
                 cell.revive();
             })
             return addCell(cell, this.cells);
         });
 
+        const verdicts = [...shouldSurvive, ...shouldDie, ...shouldReproduce];
+
         if (showVerdict) {
-            const surviveBoard = verdictBoard(VERDICT.SURVIVE, shouldSurvive);
-            const dieBoard = verdictBoard(VERDICT.KILL, shouldDie);
-            const reproduceBoard = verdictBoard(VERDICT.REPRODUCE, shouldDie);
-
-            const verdictsBoard = surviveBoard.map((surviveRow: boolean[], y: number) => {
-                return surviveRow.map((survive: boolean, x) => {
-                    return survive ? 'S' : dieBoard[y][x] ? 'K' : reproduceBoard[y][x] ? 'L' : 'O'
-                })
-            });
-
-            console.log('verdicts', verdictsBoard);
+            console.log('verdicts', createBoardFromCells(createCellRecordFromArray(verdicts), {
+                write: (c) => c.verdict,
+            }));
         }
 
-        [...shouldSurvive, ...shouldDie, ...shouldReproduce].map((cell) => cell.applyVerdict());
+        verdicts.forEach((cell) => cell.applyVerdict());
 
 
         for (const key of shouldDie.map((cell) => cell.coordinate).map(toCellKey)) {
@@ -62,10 +64,10 @@ export class GameOfLife {
         return Object.values(this.cells);
     }
 
-    allDeadNeighbours() {
+    allDeadNeighbourCells() {
         const neighbourCoordinates: Coordinate[] = this.aliveCells().map((cell) => this.surroundingCoordinates(cell.coordinate)).flat(2)
         const deadNeighbourCoordinates = neighbourCoordinates.filter((c) => !cellAt(c, this.cells));
-        return _.uniqWith(deadNeighbourCoordinates, equalCoordinates);
+        return _.uniqWith(deadNeighbourCoordinates, equalCoordinates).map(c => new Cell(c, false));
     }
 
     surroundingCoordinates(coordinate: Coordinate): Coordinate[] {

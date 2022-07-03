@@ -1,5 +1,6 @@
 import { createCellRecordFromBoard } from './Utils';
 import { GameOfLife } from './GameOfLife';
+import { Cell } from './Cell';
 
 describe(GameOfLife.name, () => {
     describe('isCellAlive', () => {
@@ -38,10 +39,10 @@ describe(GameOfLife.name, () => {
                     [1,1,0],
                     [0,0,0]
                 ])
-            ).neighbourCount({
+            ).neighbourCount(new Cell({
                 x: 0,
                 y: 0
-            })).toEqual(3)
+            }))).toEqual(3)
         });
 
         it('should have 2 neighbours', () => {
@@ -51,10 +52,10 @@ describe(GameOfLife.name, () => {
                     [1,1,0],
                     [0,0,0]
                 ])
-            ).neighbourCount({
+            ).neighbourCount(new Cell({
                 x: 1,
                 y: 1
-            })).toEqual(2)
+            }))).toEqual(2)
         });
 
         it('should have 1 neighbours', () => {
@@ -64,10 +65,10 @@ describe(GameOfLife.name, () => {
                     [1,1,0],
                     [0,0,0]
                 ])
-            ).neighbourCount({
+            ).neighbourCount(new Cell({
                 x: 2,
                 y: 2
-            })).toEqual(1)
+            }))).toEqual(1)
         });
     });
 });
