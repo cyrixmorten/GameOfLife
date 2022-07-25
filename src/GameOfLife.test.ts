@@ -1,4 +1,4 @@
-import { createCellRecordFromBoard } from './Utils';
+import { createCellRecordFromBoard } from './CellUtils';
 import { GameOfLife } from './GameOfLife';
 import { Cell } from './Cell';
 

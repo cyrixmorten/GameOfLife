@@ -1,19 +1,16 @@
-import { createBoardFromCells, createCellRecordFromBoard } from './Utils';
 import { GameOfLife } from './GameOfLife';
+import { createBoardFromCellRecord, createCellRecordFromBoard } from './BoardUtils';
 
 
 const startGame = () => {
 
     let blinker = new GameOfLife(createCellRecordFromBoard([
-        [0,0,0,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,0,0,0]
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
     ]));
 
-
-    console.log('start', createBoardFromCells(blinker.cells, {
+    console.log('start', createBoardFromCellRecord(blinker.cells, {
         check: (c) => c && c.isAlive(),
         whenTrue: 'X',
         whenFalse: 'O'
@@ -25,7 +22,7 @@ const startGame = () => {
         tickCount++
 
 
-        console.log('tick', tickCount,  createBoardFromCells(blinker.cells, {
+        console.log('tick', tickCount,  createBoardFromCellRecord(blinker.cells, {
             check: (c) => c && c.isAlive(),
             whenTrue: 1,
             whenFalse: 0
@@ -36,7 +33,7 @@ const startGame = () => {
         }, 1000);
     }
 
-    run();
+    //run();
 }
 
 startGame();

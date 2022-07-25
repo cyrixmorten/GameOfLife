@@ -1,5 +1,4 @@
 import { Coordinate } from './Coordinate';
-import { toCellKey } from './Utils';
 
 export enum VERDICT {
     NONE = 'O',
@@ -13,7 +12,7 @@ export class Cell {
     public verdict: VERDICT = VERDICT.NONE;
     private verdictFn: () => void = () => null;
 
-    constructor(public readonly coordinate : Coordinate, private alive: boolean = true) {}
+    constructor(public coordinate : Coordinate, private alive: boolean = true) {}
 
     public isAlive() {
         return this.alive;

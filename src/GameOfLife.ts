@@ -4,12 +4,12 @@ import {
     addCell,
     cellAt,
     CellRecord,
-    createBoardFromCells,
     createCellRecordFromArray,
-    equalCoordinates,
     toCellKey,
-} from './Utils';
+} from './CellUtils';
 import * as _ from 'lodash';
+import { createBoardFromCellRecord } from './BoardUtils';
+import { equalCoordinates } from './CoordinateUtils';
 
 export class GameOfLife {
 
@@ -43,7 +43,7 @@ export class GameOfLife {
         const verdicts = [...shouldSurvive, ...shouldDie, ...shouldReproduce];
 
         if (showVerdict) {
-            console.log('verdicts', createBoardFromCells(createCellRecordFromArray(verdicts), {
+            console.log('verdicts', createBoardFromCellRecord(createCellRecordFromArray(verdicts), {
                 write: (c) => c.verdict,
             }));
         }
